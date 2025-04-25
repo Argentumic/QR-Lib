@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +51,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.window.Dialog
+import com.example.qrlib.MainActivity.Companion.QRurlsArray
+import com.example.qrlib.MainActivity.Companion.url
 import com.example.qrlib.ui.theme.QRБібліотекаTheme
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -58,6 +61,10 @@ import com.google.zxing.common.BitMatrix
 
 
 class MainActivity : ComponentActivity() {
+    companion object{
+        var QRurlsArray = mutableStateListOf<String>()
+        var url = ""
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -70,6 +77,7 @@ class MainActivity : ComponentActivity() {
                         .background(Color(red = 0, green = 0, blue = 0))
                         .fillMaxSize()
                 ) {
+                    QRsList()
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -77,12 +85,15 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.Bottom
                     ) {
+
+
                         AddNewQRButton(onClick = { showDialog = true })
 
                         if (showDialog) {
                             DialogWithImage(
                                 onDismissRequest = { showDialog = false },
-                                onConfirmation = { showDialog = false }
+                                onConfirmation = { showDialog = false
+                                                    QRurlsArray.add(url)}
                             )
                         }
                     }
@@ -122,7 +133,8 @@ fun SimpleOutlinedTextFieldSample() {
 
         OutlinedTextField(
             value = text,
-            onValueChange = { text = it },
+            onValueChange = { text = it
+                                url = it},
             label = { Text("Label") }
         )
     }
@@ -137,6 +149,15 @@ fun AddNewQRButton(onClick: () -> Unit) {
             tint = Color.White,
             modifier = Modifier.size(36.dp)
         )
+    }
+}
+
+@Composable
+fun QRsList() {
+    Column {
+        for (item in QRurlsArray) {
+            QrCodeView(url = item)
+        }
     }
 }
 
