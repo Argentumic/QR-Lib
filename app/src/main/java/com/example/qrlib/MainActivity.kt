@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,6 +90,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QRsList(database: QRcodesDatabase) {
     val qrList by database.dao.getQR().collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
 
     if (!qrList.isEmpty()) {
         LazyColumn(
@@ -98,12 +100,20 @@ fun QRsList(database: QRcodesDatabase) {
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             items(qrList) { qr ->
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) { QrCodeView(url = qr.url) }
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        QrCodeView(url = qr.url)
+                        DeleteQR(onClick = {
+                            scope.launch {
+                                database.dao.deleteQR(qr)
+                            }
+                        })
+                    }
             }
         }
     }
@@ -132,6 +142,18 @@ fun AddNewQRButton(onClick: () -> Unit) {
         Icon(
             Icons.Rounded.Add,
             contentDescription = "Add QR Code",
+            tint = Color.White,
+            modifier = Modifier.size(36.dp)
+        )
+    }
+}
+
+@Composable
+fun DeleteQR(onClick: () -> Unit) {
+    TextButton(onClick = onClick) {
+        Icon(
+            Icons.Rounded.Delete,
+            contentDescription = "Delete QR Code",
             tint = Color.White,
             modifier = Modifier.size(36.dp)
         )
