@@ -10,7 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
@@ -31,10 +33,13 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     companion object {
         var url = ""
+        var label = ""
     }
 
     private lateinit var database: QRcodesDatabase
@@ -75,7 +80,7 @@ class MainActivity : ComponentActivity() {
                                 onConfirmation = {
                                     showDialog = false
                                     lifecycleScope.launch {
-                                        database.dao.upsertQR(QRcodes(url = url))
+                                        database.dao.upsertQR(QRcodes(url = url, label = label))
                                     }
                                 }
                             )
@@ -103,11 +108,11 @@ fun QRsList(database: QRcodesDatabase) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
+                            .height(250.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        QrCodeView(url = qr.url)
+                        QrCodeView(url = qr.url, label = qr.label)
                         DeleteQR(onClick = {
                             scope.launch {
                                 database.dao.deleteQR(qr)
@@ -131,9 +136,12 @@ fun generateQrCodeBitmap(content: String, size: Int = 512): Bitmap {
 }
 
 @Composable
-fun QrCodeView(url: String) {
+fun QrCodeView(url: String, label: String) {
     val bitmap = generateQrCodeBitmap(url)
-    Image(bitmap = bitmap.asImageBitmap(), contentDescription = "QR Code")
+    Column {
+        Text(text = label, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 24.sp, modifier = Modifier.padding(start = 28.dp))
+        Image(bitmap = bitmap.asImageBitmap(), contentDescription = "QR Code")
+    }
 }
 
 @Composable
@@ -168,8 +176,9 @@ fun DialogWithImage(
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
-                .height(400.dp)
+                .height(500.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -178,7 +187,7 @@ fun DialogWithImage(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SimpleOutlinedTextFieldSample()
+                InputField()
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -202,30 +211,42 @@ fun DialogWithImage(
 }
 
 @Composable
-fun SimpleOutlinedTextFieldSample() {
-    var text by remember { mutableStateOf("") }
+fun InputField() {
+    var textForURL by remember { mutableStateOf("") }
+    var textForLabel by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 50.dp, max = 300.dp)
+            .heightIn(min = 50.dp, max = 400.dp)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+
     ) {
-        if (text.isNotBlank()) {
-            QrCodeView(url = text)
+        if (textForURL.isNotBlank()) {
+            QrCodeView(url = textForURL, label = " ")
         } else {
-            QrCodeView(url = " ")
+            QrCodeView(url = " ", label = " ")
         }
 
         OutlinedTextField(
-            value = text,
+            value = textForURL,
+            modifier = Modifier.padding(top = 8.dp),
             onValueChange = {
-                text = it
+                textForURL = it
                 MainActivity.url = it
             },
             label = { Text("Введіть URL") }
+        )
+        OutlinedTextField(
+            value = textForLabel,
+            modifier = Modifier.padding(top = 8.dp),
+            onValueChange = {
+                textForLabel = it
+                MainActivity.label = it
+            },
+            label = { Text("Введіть назву") }
         )
     }
 }
